@@ -16,6 +16,7 @@ html,body{
   color:#fff;
 }
 
+/* SCENES */
 .scene{
   position:absolute;
   inset:0;
@@ -24,16 +25,16 @@ html,body{
   justify-content:center;
   flex-direction:column;
   opacity:0;
-  pointer-events:none;
 }
 
 .scene.active{
   opacity:1;
 }
 
+/* TEXT */
 h1{
   font-size:44px;
-  margin:8px 0;
+  margin:6px 0;
   text-align:center;
 }
 
@@ -47,6 +48,7 @@ p{
   text-shadow:0 0 25px rgba(255,180,80,.9);
 }
 
+/* LIGHTS */
 .light{
   position:absolute;
   width:8px;
@@ -55,9 +57,19 @@ p{
   background:gold;
 }
 
+/* CANVAS */
 canvas{
   position:absolute;
   inset:0;
+  z-index:1;
+}
+
+/* FINAL TEXT */
+#finalText{
+  position:relative;
+  z-index:5;
+  text-align:center;
+  pointer-events:none;
 }
 </style>
 </head>
@@ -87,53 +99,56 @@ canvas{
 
 <div class="scene" id="s6">
   <canvas id="fx"></canvas>
-  <h1 class="glow">🎆 HAPPY NEW YEAR 🎆</h1>
-  <h1 class="glow">Rii</h1>
-  <p>
-    May this year be bright,<br>
-    full of good moments,<br>
-    and festival energy all around 🪔
-  </p>
+
+  <div id="finalText">
+    <h1 class="glow">🎆 HAPPY NEW YEAR 🎆</h1>
+    <h1 class="glow">Rii</h1>
+    <p>
+      May this year be bright,<br>
+      full of good moments,<br>
+      and festival energy all around 🪔
+    </p>
+  </div>
 </div>
 
 <script>
 const scenes = document.querySelectorAll(".scene");
-let index = 0;
 
-/* Helper */
+/* SHOW SCENE */
 function show(i){
   scenes.forEach(s=>s.classList.remove("active"));
   scenes[i].classList.add("active");
 }
 
-/* TIMELINE FLOW */
+/* AUTO CINEMATIC FLOW */
 const tl = gsap.timeline();
 
-tl.to("#s1", {opacity:1, duration:1})
-  .to("#s1", {opacity:0, duration:.6, delay:1})
+tl.to("#s1",{opacity:1,duration:1})
+  .to("#s1",{opacity:0,duration:.6,delay:1})
 
   .call(()=>show(1))
   .call(nameReveal)
-  .to("#s2", {opacity:1, duration:1})
-  .to("#s2", {opacity:0, duration:.6, delay:1})
+  .to("#s2",{opacity:1,duration:1})
+  .to("#s2",{opacity:0,duration:.6,delay:1})
 
   .call(()=>show(2))
-  .call(lights)
-  .to("#s3", {opacity:1, duration:1})
-  .to("#s3", {opacity:0, duration:.6, delay:1.2})
+  .call(festivalLights)
+  .to("#s3",{opacity:1,duration:1})
+  .to("#s3",{opacity:0,duration:.6,delay:1.2})
 
   .call(()=>show(3))
-  .to("#s4", {opacity:1, duration:1})
-  .to("#s4", {opacity:0, duration:.6, delay:1})
+  .to("#s4",{opacity:1,duration:1})
+  .to("#s4",{opacity:0,duration:.6,delay:1})
 
   .call(()=>show(4))
-  .to("#s5", {opacity:1, duration:1})
-  .to("#s5", {opacity:0, duration:.6, delay:1})
+  .to("#s5",{opacity:1,duration:1})
+  .to("#s5",{opacity:0,duration:.6,delay:1})
 
   .call(()=>show(5))
   .call(festival)
-  .to("#s6", {opacity:1, duration:1.5});
+  .to("#s6",{opacity:1,duration:1.5});
 
+/* NAME ANIMATION */
 function nameReveal(){
   const text="Hey Rii ✨";
   const el=document.getElementById("name");
@@ -145,8 +160,9 @@ function nameReveal(){
   },120);
 }
 
-function lights(){
-  for(let i=0;i<30;i++){
+/* FESTIVAL LIGHTS */
+function festivalLights(){
+  for(let i=0;i<40;i++){
     const d=document.createElement("div");
     d.className="light";
     d.style.left=Math.random()*100+"vw";
@@ -162,16 +178,19 @@ function lights(){
   }
 }
 
+/* FIREWORKS (AROUND TEXT, NOT OVER IT) */
 function festival(){
   const c=document.getElementById("fx");
   const ctx=c.getContext("2d");
   c.width=innerWidth;
   c.height=innerHeight;
-  const p=[];
+
+  const particles=[];
+  const safeZone=c.height/2;
 
   function burst(x,y){
     for(let i=0;i<40;i++){
-      p.push({
+      particles.push({
         x,y,
         vx:(Math.random()-.5)*6,
         vy:(Math.random()-.5)*6,
@@ -181,18 +200,25 @@ function festival(){
     }
   }
 
-  setInterval(()=>burst(Math.random()*c.width,Math.random()*c.height*.6),900);
+  setInterval(()=>{
+    burst(Math.random()*c.width, Math.random()*(safeZone-120));
+  },900);
+
   c.onclick=e=>burst(e.clientX,e.clientY);
 
   function draw(){
     ctx.fillStyle="rgba(7,7,16,.25)";
     ctx.fillRect(0,0,c.width,c.height);
-    p.forEach((o,i)=>{
-      o.x+=o.vx;o.y+=o.vy;o.life--;
-      ctx.fillStyle=o.col;
-      ctx.fillRect(o.x,o.y,3,3);
-      if(o.life<=0)p.splice(i,1);
+
+    particles.forEach((p,i)=>{
+      p.x+=p.vx;
+      p.y+=p.vy;
+      p.life--;
+      ctx.fillStyle=p.col;
+      ctx.fillRect(p.x,p.y,3,3);
+      if(p.life<=0) particles.splice(i,1);
     });
+
     requestAnimationFrame(draw);
   }
   draw();
